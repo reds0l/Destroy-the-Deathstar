@@ -1,0 +1,10 @@
+# Complied Object Files
+*.o
+*.obj
+
+# Executables
+*.exe
+*.out
+
+# Swap Files
+*.swp
