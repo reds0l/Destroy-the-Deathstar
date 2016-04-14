@@ -7,13 +7,12 @@ class Laser(pygame.sprite.Sprite):
         pygame.sprite.Sprite.__init__(self)
 
         self.gs = gs
-        self.image = pygame.image.load('laser.png')
+        self.image = pygame.image.load('images/laser.png')
         self.scale_image(2)
         self.orig_image = self.image
         self.rect = self.image.get_rect()
         
         self.angle = ship.angle
-        print "created laser with ship angle: " + str(self.angle)
         
         self.rect.centerx = ship.rect.centerx
         self.rect.centery = ship.rect.centery 
@@ -33,6 +32,9 @@ class Laser(pygame.sprite.Sprite):
         self.rect = self.rect.move(x,y)
 
     def detect_collision(self):
+        ds_center = gs.deathstar.rect.center
+        ds_radius = gs.deathstar.rect.height
+
         if self.rect.colliderect(gs.deathstar.rect):
             gs.deathstar.got_hit()
             return 1
@@ -45,7 +47,7 @@ class Deathstar(pygame.sprite.Sprite):
         pygame.sprite.Sprite.__init__(self)
 
         self.gs = gs
-        self.image = pygame.image.load('deathstar.png')
+        self.image = pygame.image.load('images/deathstar.png')
         self.scale_image(0.7)
         self.orig_image = self.image
         self.rect = self.image.get_rect()
@@ -54,16 +56,20 @@ class Deathstar(pygame.sprite.Sprite):
         self.rect.centery = 100
 
         # Game stats
-        self.health = 15
+        self.health = 20
+        self.exploding_flag = 0
+        self.exploding_frame = 0
 
     def scale_image(self, amnt):
         self.size = self.image.get_size()
         self.image = pygame.transform.scale(self.image, (int(self.size[0]/amnt), int(self.size[1]/amnt)))
 
     def got_hit(self):
-        self.health -= 1
-        if self.health == 0:
-            self.image = pygame.image.load('dead_deathstar.png')
+        if self.health > 0:
+            self.health -= 1
+
+        if self.health == 8:
+            self.image = pygame.image.load('images/dead_deathstar.png')
             self.scale_image(0.7)
             self.orig_image = self.image
             self.rect = self.image.get_rect()
@@ -71,6 +77,22 @@ class Deathstar(pygame.sprite.Sprite):
             self.rect.centerx = 100
             self.rect.centery = 100
 
+        if self.health == 0:
+            self.exploding_flag = 1
+            print "exploding..."
+
+    def tick(self):
+        if self.exploding_flag == 1 and self.exploding_frame < 16:
+            if self.exploding_frame < 10:
+                self.image = pygame.image.load('explosion/frames00' + str(self.exploding_frame) + 'a.png')
+            else:
+                self.image = pygame.image.load('explosion/frames0' + str(self.exploding_frame) + 'a.png')
+            #self.scale_image(0.7)
+            self.orig_image = self.image
+            self.rect = self.image.get_rect()
+            self.rect.centerx = 100
+            self.rect.centery = 100
+            self.exploding_frame += 1
         
 
 class Player(pygame.sprite.Sprite):
@@ -78,7 +100,7 @@ class Player(pygame.sprite.Sprite):
         pygame.sprite.Sprite.__init__(self)
 
         self.gs = gs
-        self.image = pygame.image.load('spaceship.png')
+        self.image = pygame.image.load('images/spaceship.png')
         self.scale_image(5)
         self.orig_image = self.image
         self.rect = self.image.get_rect()
@@ -106,6 +128,7 @@ class Player(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(center=(self.rect.center))
 
     def handle_key_press(self):
+        # get key and mouse click
         key = pygame.key.get_pressed()
         mouse = pygame.mouse.get_pressed()
         # movement amount
@@ -175,6 +198,7 @@ class GameSpace:
 
             # put here because player tick creates laser
             self.player.tick()
+            self.deathstar.tick()
             self.screen.blit(self.player.image, self.player.rect)
             self.screen.blit(self.deathstar.image, self.deathstar.rect)
 
