@@ -32,14 +32,14 @@ class Laser(pygame.sprite.Sprite):
         self.rect = self.rect.move(x,y)
 
     def detect_collision(self):
-        if self.rect.centerx > 640 or self.rect.centerx < 0 or self.rect.centery > 480 or self.rect.centery < 0:
+        if self.rect.centerx > gs.width or self.rect.centerx < 0 or self.rect.centery > gs.height or self.rect.centery < 0:
             return 1
 
         if gs.deathstar.exploding_flag == 0:
             ds_center = gs.deathstar.rect.center
             ds_radius = gs.deathstar.rect.height
 
-            if self.rect.colliderect(gs.deathstar.rect):
+            if pygame.sprite.collide_circle(gs.deathstar, self):
                 gs.deathstar.got_hit()
                 return 1
             else:
@@ -52,9 +52,11 @@ class Deathstar(pygame.sprite.Sprite):
 
         self.gs = gs
         self.image = pygame.image.load('images/deathstar.png')
+        self.explode_sound = pygame.mixer.Sound('sounds/explosion.wav')
         self.scale_image(0.7)
         self.orig_image = self.image
         self.rect = self.image.get_rect()
+        self.radius = (self.rect.width/2) - 5
 
         self.rect.centerx = 100
         self.rect.centery = 100
@@ -100,10 +102,9 @@ class Deathstar(pygame.sprite.Sprite):
             self.exploding_frame += 1
 
     def explode_audio(self):
-        print "play explode audio"
-        mixer = pygame.mixer.init()
-        explode_sound = mixer.Sound('expolde.wav')
-        explode_sound.play()
+        #print "play explode audio"
+        self.explode_sound.play()
+        #print self.explode_sound.get_length()
         
 
 class Player(pygame.sprite.Sprite):
@@ -157,11 +158,16 @@ class Player(pygame.sprite.Sprite):
 
         # handles laser shooting
         if mouse[0]:
-            print "Left Click!"
+            #print "Left Click!"
             self.fire_laser()
 
+        #quit with escape key
+        if key[pygame.K_ESCAPE]:
+            gs.running = 0
+
+
     def fire_laser(self):
-        print "firing laser"
+        #print "firing laser"
         laser = Laser(gs,self)
         self.laser_list.append(laser)
 
@@ -195,8 +201,8 @@ class GameSpace:
         self.player = Player(self)
         self.deathstar = Deathstar(self)
 
-        running = True
-        while running:
+        self.running = True
+        while self.running:
             event = pygame.event.poll()
             if event.type == pygame.QUIT:
                 running = False
